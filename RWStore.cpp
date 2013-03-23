@@ -9,7 +9,12 @@ RWStore::RWStore()
 
 RWStore::~RWStore()
 {
+}
 
+void RWStore::Clear_All()
+{
+    Clear_Reads();
+    Clear_Writes();
 }
 
 int RWStore::Push_Read(short rd_addr)
@@ -20,10 +25,16 @@ int RWStore::Push_Read(short rd_addr)
 
 short RWStore::Pop_Read()
 {
-    rd_back = this->read_sets.back();
+    rd_back = this->read_sets.front();
     this->read_sets.pop();
 
     return rd_back;
+}
+
+void RWStore::Clear_Reads()
+{
+    while(!this->read_sets.empty())
+            this->read_sets.pop();
 }
 
 int RWStore::Push_Write(short wr_addr)
@@ -36,8 +47,14 @@ int RWStore::Push_Write(short wr_addr)
 
 short RWStore::Pop_Write()
 {
-   wr_back = this->write_sets.back();
+   wr_back = this->write_sets.front();
    this->write_sets.pop();
 
    return wr_back;
+}
+
+void RWStore::Clear_Writes()
+{
+    while(!this->write_sets.empty())
+        this->write_sets.pop();
 }
