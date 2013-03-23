@@ -9,7 +9,7 @@ AccessCache::AccessCache()
     state = st_ready;
     transit.state = st_ready;
     transit.event = no_ev;
-    transit.function = &AccessCache::Ready;
+    //transit.function = &AccessCache::Ready;
 }
 
 AccessCache::~AccessCache()
@@ -23,7 +23,7 @@ void AccessCache::SetupFSM()
 
     //--Setup READY state
     tempST.state = st_ready;
-    tempST.function = &AccessCache::Ready;
+    //tempST.function = &AccessCache::Ready;
 
         //Entry point transition
         tempST.event = no_ev;
@@ -39,30 +39,28 @@ void AccessCache::SetupFSM()
 
     //--Setup ACKNOWLEDGE state
     tempST.state = st_acknowledge;
-    tempST.function = &AccessCache::Acknowledge;
+    //tempST.function = &AccessCache::Acknowledge;
 
         tempST.event = ev_control;
         state_interconnect.push_back(tempST);
 
     //--Setup ACCEPTED state
     tempST.state = st_accepted;
-    tempST.function = &AccessCache::Accepted;
+    //tempST.function = &AccessCache::Accepted;
         
         tempST.event = no_ev;
         state_interconnect.push_back(tempST);
 
     //--Setup ABORTED state
     tempST.state = st_aborted;
-    //tempST.function
-
-
 }
 
 void AccessCache::RunFSM()
 {
+
     while(!done)
     {
-        this->*(transit.function( transit.state, transit.event));
+        //transit = this->*function(st_ready, ev_control);
     }
 }
 

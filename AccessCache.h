@@ -1,8 +1,6 @@
 #ifndef ACCESS_CACHE_H
 #define ACCESS_CACHE_H
-//#include "State.h"
 #include "RWStore.h"
-//#include "AccessCache.h"
 #include <vector>
 
 
@@ -12,14 +10,13 @@ enum Event {ev_control = 0, ev_abort, ev_commit, no_ev, ev_error};
 //prototype class here
 class AccessCache;
 
+StateTransition (AccessCache::*function) (State src, Event ev);
+
 struct StateTransition
 {
     State state;
     Event event;
-
-    StateTransition (AccessCache::*function) (State src, Event ev);
 };
-
 
 class AccessCache
 {
