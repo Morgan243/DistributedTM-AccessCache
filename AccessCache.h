@@ -24,14 +24,19 @@ struct StateTransition
 class AccessCache
 {
     private:
+        bool done;
         std::vector<RWStore> rw_stores;
         std::vector<StateTransition> state_interconnect;
+        State state;
+        StateTransition transit;
+
         
     public:
         AccessCache();
         ~AccessCache();
 
         void SetupFSM();
+        void RunFSM();
             
         //--State functions
         StateTransition Ready(State src, Event ev);

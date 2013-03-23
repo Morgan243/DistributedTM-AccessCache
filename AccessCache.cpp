@@ -4,7 +4,12 @@ using namespace std;
 
 AccessCache::AccessCache()
 {
-
+    done = false;
+    SetupFSM();
+    state = st_ready;
+    transit.state = st_ready;
+    transit.event = no_ev;
+    transit.function = &AccessCache::Ready;
 }
 
 AccessCache::~AccessCache()
@@ -39,13 +44,26 @@ void AccessCache::SetupFSM()
         tempST.event = ev_control;
         state_interconnect.push_back(tempST);
 
-    //--Setup ACKNOWLEDGE state
+    //--Setup ACCEPTED state
     tempST.state = st_accepted;
     tempST.function = &AccessCache::Accepted;
         
-        //tempST.event = 
+        tempST.event = no_ev;
+        state_interconnect.push_back(tempST);
+
+    //--Setup ABORTED state
+    tempST.state = st_aborted;
+    //tempST.function
 
 
+}
+
+void AccessCache::RunFSM()
+{
+    while(!done)
+    {
+        this->*(transit.function( transit.state, transit.event));
+    }
 }
 
 StateTransition AccessCache::Ready(State src, Event ev)
