@@ -9,13 +9,11 @@ class RWStore
         std::queue<short> read_sets;
         std::queue<short> write_sets;
 
+        unsigned char status;
 
     public:
         RWStore();
         ~RWStore();
-
-        //should this be here or in Cache?
-        unsigned char status;
 
         void Clear_All();
 

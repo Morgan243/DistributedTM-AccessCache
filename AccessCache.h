@@ -24,12 +24,6 @@ class AccessCache
         StateTransition transit;
 
         
-    public:
-        AccessCache();
-        ~AccessCache();
-
-        void SetupFSM();
-        void RunFSM();
         StateTransition Transit(StateTransition st_tr);
             
         //--State functions
@@ -37,5 +31,18 @@ class AccessCache
         StateTransition Acknowledge(StateTransition st_tr);
         StateTransition Accepted(StateTransition st_tr);
         StateTransition Aborted(StateTransition st_tr);
+
+        void RunFSM();
+    public:
+        AccessCache();
+        ~AccessCache();
+
+        void SetupFSM();
+
+        unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXTT TTTT)
+        unsigned short address_reg;                         //what address is the operation taking place?
+        
+        void Check();
+
 };
 #endif
