@@ -3,14 +3,10 @@
 #include "RWStore.h"
 #include <vector>
 
+#define DEBUG 1
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
 enum Event {ev_control = 0, ev_abort, ev_commit, no_ev, ev_error};
-
-//prototype class here
-class AccessCache;
-
-StateTransition (AccessCache::*function) (State src, Event ev);
 
 struct StateTransition
 {
@@ -34,11 +30,12 @@ class AccessCache
 
         void SetupFSM();
         void RunFSM();
+        StateTransition Transit(StateTransition st_tr);
             
         //--State functions
-        StateTransition Ready(State src, Event ev);
-        StateTransition Acknowledge(State src, Event ev);
-        StateTransition Accepted(State src, Event ev);
-        StateTransition Aborted(State src, Event ev);
+        StateTransition Ready(StateTransition st_tr);
+        StateTransition Acknowledge(StateTransition st_tr);
+        StateTransition Accepted(StateTransition st_tr);
+        StateTransition Aborted(StateTransition st_tr);
 };
 #endif
