@@ -6,7 +6,7 @@
 #define DEBUG 1
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
-enum Event {ev_control = 0, ev_abort, ev_commit, no_ev, ev_error};
+enum Event {no_ev = 0, ev_control, ev_abort, ev_commit, ev_error};
 
 struct StateTransition
 {
@@ -17,10 +17,8 @@ struct StateTransition
 class AccessCache
 {
     private:
-        bool done;
-        std::vector<RWStore> rw_stores;
-        std::vector<StateTransition> state_interconnect;
-        State state;
+        bool done;                                              //transition through state machine until this is true
+        std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
         StateTransition transit;
 
         
