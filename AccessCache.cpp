@@ -8,6 +8,7 @@ AccessCache::AccessCache()
     SetupFSM();
     transit.state = st_ready;
     transit.event = no_ev;
+    //this->isConflict = &AccessCache::isMutexConflict;
     //transit.function = &AccessCache::Ready;
 }
 
@@ -105,4 +106,71 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
         cout<<"Entered ABORTED state..."<<endl;
     #endif
 
+}
+
+void AccessCache::extractFromControl(unsigned char &transaction_id, unsigned char &operation)
+{
+    transaction_id = (short)(control_reg & 0x3F);
+    operation = (char)((control_reg & 0xC0)>>6);
+}
+
+bool AccessCache::isMutexConflict(short address)
+{
+//{{{
+    unsigned char transaction_id, operation;
+
+    extractFromControl(transaction_id, operation);
+
+    //if any onther transaction is reading or writing ABORT
+    for(int i = 0; i < rw_stores.size(); i++)
+    {
+        //dont waste time checking own transaction
+        if(i != (int)transaction_id)
+        {
+            if(rw_stores[i].isAccess(address))
+                return false; //conflict found
+        }
+    }
+//}}}
+}
+
+bool AccessCache::isMutexRWConflict(short address)
+{
+//{{{
+    unsigned char transaction_id, operation;
+
+    extractFromControl(transaction_id, operation);
+
+    //if any other transaction is writing this address already
+    for(int i = 0; i < rw_stores.size(); i++)
+    {
+        //dont waste time checking own transaction
+        if(i != (int)transaction_id)
+        {
+            if(rw_stores[i].isWrite(address))
+                return false; //conflict found
+        }
+    }
+//}}}
+}
+
+
+bool AccessCache::isOptimisticConflict(short address)
+{
+//{{{
+    unsigned char transaction_id, operation;
+
+    extractFromControl(transaction_id, operation);
+
+    for(int i = 0; i < rw_stores.size(); i++)
+    {
+        //dont waste time checking own transaction
+        if(i != (int)transaction_id)
+        {
+            //write-write conflicts can never turn out okay, abort them
+            if(rw_stores[i].isWrite(address))
+                return false; //conflict found
+        }
+    }
+//}}}
 }

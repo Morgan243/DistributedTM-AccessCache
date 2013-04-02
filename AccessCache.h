@@ -30,6 +30,14 @@ class AccessCache
         StateTransition Accepted(StateTransition st_tr);
         StateTransition Aborted(StateTransition st_tr);
 
+        bool (AccessCache::*isConflict)(short address);
+
+        bool isMutexConflict(short address);
+        bool isMutexRWConflict(short address);
+        bool isOptimisticConflict(short address);
+
+        void extractFromControl(unsigned char &transaction_id, unsigned char &operation);
+
         void RunFSM();
     public:
         AccessCache();
