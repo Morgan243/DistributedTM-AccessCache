@@ -2,6 +2,9 @@
 #include <vector>
 #include <iostream>
 
+#define STATUS_IDLE 0x00
+#define STATUS_COMMIT 0x01
+#define STATUS_UNFINISHED 0x02
 
 class RWStore
 {
@@ -12,6 +15,7 @@ class RWStore
         std::vector<short> write_sets;         //all the addresses that transaction has written
 
         unsigned char status;                 //indicates the finality of the transactions changes
+
 
     public:
         RWStore();
@@ -30,6 +34,11 @@ class RWStore
         int Enqueue_Write(short wr_addr);
         short Dequeue_Write();
         void Clear_Writes();
+
+        void setIdle();
+        void setBegin();
+        void setCommit();
+        bool isCommit();
 
         bool isRead(short address);
         bool isWrite(short address);

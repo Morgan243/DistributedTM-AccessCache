@@ -58,6 +58,31 @@ void RWStore::Clear_Writes()
     this->write_sets.clear();
 }
 
+void RWStore::setIdle()
+{
+    status = STATUS_IDLE;
+}
+
+void RWStore::setBegin()
+{
+    status = STATUS_UNFINISHED;
+}
+
+void RWStore::setCommit()
+{
+    status = STATUS_COMMIT;
+}
+
+bool RWStore::isCommit()
+{
+//{{{
+    if(status == STATUS_COMMIT)
+        return true;
+    else
+        return false;
+//}}}
+}
+
 bool RWStore::isRead(short address)
 {
 //{{{
