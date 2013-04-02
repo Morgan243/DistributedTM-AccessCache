@@ -68,20 +68,33 @@ bool RWStore::isRead(short address)
             return true;
        } 
     }
+
+    return false;
 //}}}
 }
 
 bool RWStore::isWrite(short address)
 {
 //{{{
+    for(int i = 0; i < write_sets.size(); i++)
+    {
+       if(write_sets[i] == address)
+       {
+            return true;
+       } 
+    }
 
+    return false;
 //}}}
 }
 
 bool RWStore::isAccess(short address)
 {
 //{{{
-
+    if(isRead(address) || isWrite(address))
+        return true;
+    else
+        return false;
 //}}}
 }
 
