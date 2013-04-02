@@ -5,6 +5,10 @@
 
 #define DEBUG 1
 
+#define READ 0x01
+#define WRITE 0x02
+#define COMMIT 0x03
+
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
 enum Event {no_ev = 0, ev_control, ev_abort, ev_commit, ev_error};
 

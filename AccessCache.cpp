@@ -88,7 +88,7 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
     #endif
 
     //check RWStores for conflicts
-
+    if(isMutexConflict(address_reg))
 //}}}
 }
 
@@ -121,15 +121,22 @@ bool AccessCache::isMutexConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
-    //if any onther transaction is reading or writing ABORT
-    for(int i = 0; i < rw_stores.size(); i++)
+    if(operation == READ || operation == WRITE)
     {
-        //dont waste time checking own transaction
-        if(i != (int)transaction_id)
+        //if any onther transaction is reading or writing ABORT
+        for(int i = 0; i < rw_stores.size(); i++)
         {
-            if(rw_stores[i].isAccess(address))
-                return false; //conflict found
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                if(rw_stores[i].isAccess(address))
+                    return true; //conflict found
+            }
         }
+    }
+    else if(operation == COMMIT)
+    {
+
     }
 //}}}
 }
@@ -141,19 +148,24 @@ bool AccessCache::isMutexRWConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
-    //if any other transaction is writing this address already
-    for(int i = 0; i < rw_stores.size(); i++)
+    if(operation == READ || operation == WRITE)
     {
-        //dont waste time checking own transaction
-        if(i != (int)transaction_id)
+        for(int i = 0; i < rw_stores.size(); i++)
         {
-            if(rw_stores[i].isWrite(address))
-                return false; //conflict found
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                if(rw_stores[i].isWrite(address))
+                    return true; //conflict found
+            }
         }
+    }
+    else if(operation == COMMIT)
+    {
+
     }
 //}}}
 }
-
 
 bool AccessCache::isOptimisticConflict(short address)
 {
@@ -162,15 +174,27 @@ bool AccessCache::isOptimisticConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
-    for(int i = 0; i < rw_stores.size(); i++)
+    if(operation == READ)
     {
-        //dont waste time checking own transaction
-        if(i != (int)transaction_id)
+        //do anything?
+        return false; //no conflict
+    }
+    else if(operation == WRITE)
+    {
+        for(int i = 0; i < rw_stores.size(); i++)
         {
-            //write-write conflicts can never turn out okay, abort them
-            if(rw_stores[i].isWrite(address))
-                return false; //conflict found
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                //write-write conflicts can never turn out okay, abort them
+                if(rw_stores[i].isWrite(address))
+                    return true; //conflict found
+            }
         }
+    }
+    else if(operation == COMMIT)
+    {
+
     }
 //}}}
 }
