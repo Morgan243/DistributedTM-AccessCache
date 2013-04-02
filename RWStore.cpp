@@ -4,7 +4,7 @@ using namespace std;
 
 RWStore::RWStore()
 {
-    rd_back = wr_back = 0;
+    rd_front = wr_front = 0;
 }
 
 RWStore::~RWStore()
@@ -17,44 +17,73 @@ void RWStore::Clear_All()
     Clear_Writes();
 }
 
-int RWStore::Push_Read(short rd_addr)
+int RWStore::Enqueue_Read(short rd_addr)
 {
-    this->read_sets.push(rd_addr);
+    this->read_sets.push_back(rd_addr);
     this->read_sets.size();
 }
 
-short RWStore::Pop_Read()
+short RWStore::Dequeue_Read()
 {
-    rd_back = this->read_sets.front();
-    this->read_sets.pop();
+    rd_front = this->read_sets.front();
+    this->read_sets.erase(this->read_sets.begin());
 
-    return rd_back;
+    return rd_front;
 }
 
 void RWStore::Clear_Reads()
 {
-    while(!this->read_sets.empty())
-            this->read_sets.pop();
+    this->read_sets.clear();
 }
 
-int RWStore::Push_Write(short wr_addr)
+int RWStore::Enqueue_Write(short wr_addr)
 {
-    this->write_sets.push(wr_addr);
+    this->write_sets.push_back(wr_addr);
     return write_sets.size();
 }
 
 
 
-short RWStore::Pop_Write()
+short RWStore::Dequeue_Write()
 {
-   wr_back = this->write_sets.front();
-   this->write_sets.pop();
+   wr_front = this->write_sets.front();
+   this->write_sets.erase(this->write_sets.begin());
 
-   return wr_back;
+
+   return wr_front;
 }
 
 void RWStore::Clear_Writes()
 {
-    while(!this->write_sets.empty())
-        this->write_sets.pop();
+    this->write_sets.clear();
 }
+
+bool RWStore::isRead(short address)
+{
+//{{{
+    for(int i = 0; i < read_sets.size(); i++)
+    {
+       if(read_sets[i] == address)
+       {
+            return true;
+       } 
+    }
+//}}}
+}
+
+bool RWStore::isWrite(short address)
+{
+//{{{
+
+//}}}
+}
+
+bool RWStore::isAccess(short address)
+{
+//{{{
+
+//}}}
+}
+
+
+
