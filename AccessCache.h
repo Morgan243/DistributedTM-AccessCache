@@ -5,12 +5,14 @@
 
 #define DEBUG 1
 
-#define READ 0x01
-#define WRITE 0x02
+#define READ 0x00
+#define WRITE 0x01
+#define ACCEPT 0x02
 #define COMMIT 0x03
+#define ABORT 0x04
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
-enum Event {no_ev = 0, ev_control, ev_abort, ev_commit, ev_error};
+enum Event {no_ev = 0, ev_control, ev_abort, ev_accept, ev_commit, ev_error};
 
 struct StateTransition
 {
@@ -40,17 +42,24 @@ class AccessCache
         bool isMutexRWConflict(short address);
         bool isOptimisticConflict(short address);
 
+        void setCtrlOperation(unsigned char op);
+
         void extractFromControl(unsigned char &transaction_id, unsigned char &operation);
 
-        void RunFSM();
     public:
         AccessCache();
+        AccessCache(int num_stores);
         ~AccessCache();
 
-        void SetupFSM();
-
-        unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXTT TTTT)
+        unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXXT TTTT)
         unsigned short address_reg;                         //what address is the operation taking place?
+
+        void setRegs(int transaction_id, unsigned char operation, unsigned short address);
+
+        void SetupFSM();
+        void AddStores(int num_stores);
+        
+        bool RunFSM();
         
         void Check();
 
