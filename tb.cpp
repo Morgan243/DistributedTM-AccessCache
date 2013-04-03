@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     cout<<"How many transactions do you want?"<<endl;
     cin>>num_transactions;
     cout<<"Creating access cache with "<<num_transactions<<" transactions..."<<endl;
-    AccessCache accessCache(2);
+    AccessCache accessCache(num_transactions);
     cout<<"\t Completed!"<<endl;
 
     char select;
@@ -27,13 +27,13 @@ int main(int argc, char *argv[])
             if(select == 'r')
             {
             //{{{
-                cout<<"Enter the address that be read (short int):"<<endl;
+                cout<<"Enter the address to be read (short int):"<<endl;
                 cin>>address;
                 accessCache.setRegs(i, READ, address);
 
                 if(accessCache.RunFSM())
                 {
-                    cout<<"\tRead added successfully!"<<endl;
+                    cout<<"\t*Read added successfully!"<<endl;
                 }
                 else
                 {
@@ -44,13 +44,13 @@ int main(int argc, char *argv[])
             else if (select == 'w')
             {
             //{{{
-                cout<<"Enter the address that be written (short int):"<<endl;
+                cout<<"Enter the address to be written (short int):"<<endl;
                 cin>>address;
                 accessCache.setRegs(i, WRITE, address);
 
                 if(accessCache.RunFSM())
                 {
-                    cout<<"\tWrite added successfully!"<<endl;
+                    cout<<"\t*Write added successfully!"<<endl;
                 }
                 else
                 {

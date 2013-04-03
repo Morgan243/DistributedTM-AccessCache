@@ -17,10 +17,17 @@ void RWStore::Clear_All()
     Clear_Writes();
 }
 
-int RWStore::Enqueue_Read(short rd_addr)
+int RWStore::Enqueue_Read(unsigned short rd_addr)
 {
-    this->read_sets.push_back(rd_addr);
-    this->read_sets.size();
+    try
+    {
+        this->read_sets.push_back(rd_addr);
+        return this->read_sets.size();
+    }
+    catch (exception &e)
+    {
+        cout<<"Exception in read enqueue: "<< e.what()<<endl;
+    }
 }
 
 short RWStore::Dequeue_Read()
@@ -36,10 +43,17 @@ void RWStore::Clear_Reads()
     this->read_sets.clear();
 }
 
-int RWStore::Enqueue_Write(short wr_addr)
+int RWStore::Enqueue_Write(unsigned short wr_addr)
 {
-    this->write_sets.push_back(wr_addr);
-    return write_sets.size();
+    try
+    {
+        this->write_sets.push_back(wr_addr);
+        return write_sets.size();
+    }
+    catch (exception &e)
+    {
+        cout<<"Exception in write enqueue: "<<e.what()<<endl;
+    }
 }
 
 short RWStore::Dequeue_Write()
@@ -81,7 +95,7 @@ bool RWStore::isCommit()
 //}}}
 }
 
-bool RWStore::isRead(short address)
+bool RWStore::isRead(unsigned short address)
 {
 //{{{
     for(int i = 0; i < read_sets.size(); i++)
@@ -96,7 +110,7 @@ bool RWStore::isRead(short address)
 //}}}
 }
 
-bool RWStore::isWrite(short address)
+bool RWStore::isWrite(unsigned short address)
 {
 //{{{
     for(int i = 0; i < write_sets.size(); i++)
@@ -111,7 +125,7 @@ bool RWStore::isWrite(short address)
 //}}}
 }
 
-bool RWStore::isAccess(short address)
+bool RWStore::isAccess(unsigned short address)
 {
 //{{{
     if(isRead(address) || isWrite(address))

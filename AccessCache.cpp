@@ -109,7 +109,7 @@ StateTransition AccessCache::Ready(StateTransition st_tr)
 {
 //{{{
     #ifdef DEBUG
-        cout<<"Entered READY state..."<<endl;
+        cout<<"\t>>Entered READY state..."<<endl;
     #endif
         
     //check valid inputs first?
@@ -123,7 +123,7 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
 {
 //{{{
     #ifdef DEBUG
-        cout<<"Entered ACKNOWLEDGE state..."<<endl;
+        cout<<"\t>>Entered ACKNOWLEDGE state..."<<endl;
     #endif
 
     //check RWStores for conflicts
@@ -146,7 +146,7 @@ StateTransition AccessCache::Accepted(StateTransition st_tr)
 {
 //{{{
     #ifdef DEBUG
-        cout<<"Entered ACCEPTED state..."<<endl;
+        cout<<"\t>>Entered ACCEPTED state..."<<endl;
     #endif
 
     st_tr.state = st_ready;
@@ -182,7 +182,7 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
 {
 //{{{
     #ifdef DEBUG
-        cout<<"Entered ABORTED state..."<<endl;
+        cout<<"\t>>Entered ABORTED state..."<<endl;
     #endif
 
     st_tr.state = st_ready;
