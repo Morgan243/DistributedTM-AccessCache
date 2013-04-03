@@ -5,8 +5,84 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-
+    bool done = false;
+    int num_transactions = 0;
     cout<<"Short size on this machine is: "<< sizeof(short) <<" bytes"<<endl;
+
+    cout<<"How many transactions do you want?"<<endl;
+    cin>>num_transactions;
+    cout<<"Creating access cache with "<<num_transactions<<" transactions..."<<endl;
+    AccessCache accessCache(2);
+    cout<<"\t Completed!"<<endl;
+
+    char select;
+    short address = 0;
+    while(!done)
+    {
+        for( int i = 0; i < num_transactions && !done; i++)
+        {
+            cout<<"For transaction "<<i<<", read, write, commit, do nothing, or exit? (r,w,c,n,e):"<<endl;
+            cin>>select;
+
+            if(select == 'r')
+            {
+            //{{{
+                cout<<"Enter the address that be read (short int):"<<endl;
+                cin>>address;
+                accessCache.setRegs(i, READ, address);
+
+                if(accessCache.RunFSM())
+                {
+                    cout<<"\tRead added successfully!"<<endl;
+                }
+                else
+                {
+                    cout<<"\tREAD ABORTED!"<<endl;
+                }
+            //}}}
+            }
+            else if (select == 'w')
+            {
+            //{{{
+                cout<<"Enter the address that be written (short int):"<<endl;
+                cin>>address;
+                accessCache.setRegs(i, WRITE, address);
+
+                if(accessCache.RunFSM())
+                {
+                    cout<<"\tWrite added successfully!"<<endl;
+                }
+                else
+                {
+                    cout<<"\tWRITE ABORTED!"<<endl;
+                }
+            //}}}
+            }
+            else if (select == 'c')
+            {
+            //{{{
+                cout<<"Commit underway..."<<endl;
+                accessCache.setRegs(i, COMMIT, address);
+
+                if(accessCache.RunFSM())
+                {
+                    cout<<"\tCommit was successful!"<<endl;
+                }
+                else
+                {
+                    cout<<"\tCOMMIT ABORTED!"<<endl;
+                }
+            //}}}
+            }
+            else if(select == 'e')
+            {
+            //{{{
+                cout<<"exiting program..."<<endl;
+                done = true;
+            //}}}
+            }
+        }    
+    }
 
     return 0;
 }

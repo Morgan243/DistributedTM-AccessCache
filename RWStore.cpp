@@ -42,8 +42,6 @@ int RWStore::Enqueue_Write(short wr_addr)
     return write_sets.size();
 }
 
-
-
 short RWStore::Dequeue_Write()
 {
    wr_front = this->write_sets.front();
@@ -122,6 +120,4 @@ bool RWStore::isAccess(short address)
         return false;
 //}}}
 }
-
-
 
