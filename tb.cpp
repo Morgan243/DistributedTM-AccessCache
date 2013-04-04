@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
             //{{{
                 cout<<"Enter the address to be read (short int):"<<endl;
                 cin>>address;
-                accessCache.setRegs(i, READ, address);
+                accessCache.setRegs(i, READ_T, address);
 
                 if(accessCache.RunFSM())
                 {
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
             //{{{
                 cout<<"Enter the address to be written (short int):"<<endl;
                 cin>>address;
-                accessCache.setRegs(i, WRITE, address);
+                accessCache.setRegs(i, WRITE_T, address);
 
                 if(accessCache.RunFSM())
                 {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
             {
             //{{{
                 cout<<"Commit underway..."<<endl;
-                accessCache.setRegs(i, COMMIT, address);
+                accessCache.setRegs(i, COMMIT_T, address);
 
                 if(accessCache.RunFSM())
                 {

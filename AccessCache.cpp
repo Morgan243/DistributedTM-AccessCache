@@ -45,6 +45,14 @@ void AccessCache::AddStores(int num_stores)
 //}}}
 }
 
+int AccessCache::AddStores()
+{
+//{{{
+    this->rw_stores.push_back(RWStore());
+    return this->rw_stores.size() - 1;
+//}}}
+}
+
 void AccessCache::SetupFSM()
 {
     transit.state = st_ready;
@@ -157,21 +165,21 @@ StateTransition AccessCache::Accepted(StateTransition st_tr)
     extractFromControl(transaction_id, operation);
     
     //if just an operation, add it to the store
-    if(operation != COMMIT)
+    if(operation != COMMIT_T)
     {
-        if(operation == READ)
+        if(operation == READ_T)
             rw_stores[(int)transaction_id].Enqueue_Read(address_reg);
         else
             rw_stores[(int)transaction_id].Enqueue_Write(address_reg);
 
-        setCtrlOperation(ACCEPT);
+        setCtrlOperation(ACCEPT_T);
     }
     else
     {
         //if commit, clear store
         rw_stores[(int)transaction_id].Clear_All();
 
-        setCtrlOperation(COMMIT);
+        setCtrlOperation(COMMIT_T);
     }
 
     return st_tr;
@@ -192,7 +200,7 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
 
     extractFromControl(transaction_id, operation);
     
-    setCtrlOperation(ABORT);
+    setCtrlOperation(ABORT_T);
 
     rw_stores[(int)transaction_id].Clear_All();
 
@@ -220,7 +228,7 @@ bool AccessCache::isMutexConflict(short address)
 
     cout<<"\t\tTransaction ID: "<<(int)transaction_id<<endl;
 
-    if(operation == READ || operation == WRITE)
+    if(operation == READ_T || operation == WRITE_T)
     {
         //if any onther transaction is reading or writing ABORT
         for(int i = 0; i < rw_stores.size(); i++)
@@ -233,7 +241,7 @@ bool AccessCache::isMutexConflict(short address)
             }
         }
     }
-    else if(operation == COMMIT)
+    else if(operation == COMMIT_T)
     {
         //if any onther transaction is reading or writing ABORT
         for(int i = 0; i < rw_stores.size(); i++)
@@ -257,7 +265,7 @@ bool AccessCache::isMutexRWConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
-    if(operation == READ || operation == WRITE)
+    if(operation == READ_T || operation == WRITE_T)
     {
         for(int i = 0; i < rw_stores.size(); i++)
         {
@@ -269,7 +277,7 @@ bool AccessCache::isMutexRWConflict(short address)
             }
         }
     }
-    else if(operation == COMMIT)
+    else if(operation == COMMIT_T)
     {
 
     }
@@ -283,12 +291,12 @@ bool AccessCache::isOptimisticConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
-    if(operation == READ)
+    if(operation == READ_T)
     {
         //do anything?
         return false; //no conflict
     }
-    else if(operation == WRITE)
+    else if(operation == WRITE_T)
     {
         for(int i = 0; i < rw_stores.size(); i++)
         {
@@ -301,7 +309,7 @@ bool AccessCache::isOptimisticConflict(short address)
             }
         }
     }
-    else if(operation == COMMIT)
+    else if(operation == COMMIT_T)
     {
 
     }

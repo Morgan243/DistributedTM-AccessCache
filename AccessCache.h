@@ -5,11 +5,11 @@
 
 #define DEBUG 1
 
-#define READ 0x00
-#define WRITE 0x01
-#define ACCEPT 0x02
-#define COMMIT 0x03
-#define ABORT 0x04
+#define READ_T 0x00
+#define WRITE_T 0x01
+#define ACCEPT_T 0x02
+#define COMMIT_T 0x03
+#define ABORT_T 0x04
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
 enum Event {no_ev = 0, ev_control, ev_abort, ev_accept, ev_commit, ev_error};
@@ -58,6 +58,7 @@ class AccessCache
 
         void SetupFSM();
         void AddStores(int num_stores);
+        int AddStores();
         
         bool RunFSM();
         
