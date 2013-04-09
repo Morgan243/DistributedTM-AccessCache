@@ -13,6 +13,9 @@
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
 enum Event {no_ev = 0, ev_control, ev_abort, ev_accept, ev_commit, ev_error};
+enum Mode {mutex_md, rwMutex_md, opt_md};
+
+#define DEFAULT_MODE mutex_md
 
 struct StateTransition
 {
@@ -24,6 +27,7 @@ class AccessCache
 {
     private:
         bool done;                                              //transition through state machine until this is true
+        Mode operation_mode;
         std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
         StateTransition transit;
 
@@ -49,6 +53,7 @@ class AccessCache
     public:
         AccessCache();
         AccessCache(int num_stores);
+        AccessCache(int num_stores, Mode mode);
         ~AccessCache();
 
         unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXXT TTTT)

@@ -32,10 +32,15 @@ int RWStore::Enqueue_Read(unsigned short rd_addr)
 
 short RWStore::Dequeue_Read()
 {
-    rd_front = this->read_sets.front();
-    this->read_sets.erase(this->read_sets.begin());
+    if(this->read_sets.size() != 0)
+    {
+        rd_front = this->read_sets.front();
+        this->read_sets.erase(this->read_sets.begin());
 
-    return rd_front;
+        return rd_front;
+    }
+    else 
+        return -1;
 }
 
 void RWStore::Clear_Reads()
@@ -58,11 +63,17 @@ int RWStore::Enqueue_Write(unsigned short wr_addr)
 
 short RWStore::Dequeue_Write()
 {
-   wr_front = this->write_sets.front();
-   this->write_sets.erase(this->write_sets.begin());
+   if(this->write_sets.size() != 0)
+   {
+       wr_front = this->write_sets.front();
+       this->write_sets.erase(this->write_sets.begin());
+
+       return wr_front;
+   }
+   else
+       return -1;
 
 
-   return wr_front;
 }
 
 void RWStore::Clear_Writes()
@@ -85,10 +96,26 @@ void RWStore::setCommit()
     status = STATUS_COMMIT;
 }
 
+void RWStore::setAbort()
+{
+    status = STATUS_ABORT;
+}
+
+
 bool RWStore::isCommit()
 {
 //{{{
     if(status == STATUS_COMMIT)
+        return true;
+    else
+        return false;
+//}}}
+}
+
+bool RWStore::isAbort()
+{
+//{{{
+    if(status == STATUS_ABORT)
         return true;
     else
         return false;

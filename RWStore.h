@@ -5,6 +5,7 @@
 #define STATUS_IDLE 0x00
 #define STATUS_COMMIT 0x01
 #define STATUS_UNFINISHED 0x02
+#define STATUS_ABORT 0x03           //set by  other transactions in optimistic scheme
 
 class RWStore
 {
@@ -38,7 +39,9 @@ class RWStore
         void setIdle();
         void setBegin();
         void setCommit();
+        void setAbort();
         bool isCommit();
+        bool isAbort();
 
         bool isRead(unsigned short address);
         bool isWrite(unsigned short address);

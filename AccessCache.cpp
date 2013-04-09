@@ -4,12 +4,14 @@ using namespace std;
 
 AccessCache::AccessCache()
 {
+//{{{
     done = false;
     SetupFSM();
     transit.state = st_ready;
     transit.event = no_ev;
-    //this->isConflict = &AccessCache::isMutexConflict;
-    //transit.function = &AccessCache::Ready;
+
+    operation_mode = DEFAULT_MODE;
+//}}}
 }
 
 AccessCache::AccessCache(int num_stores)
@@ -21,6 +23,22 @@ AccessCache::AccessCache(int num_stores)
     transit.event = no_ev;
 
     AddStores(num_stores);
+
+    operation_mode = DEFAULT_MODE;
+//}}}
+}
+
+AccessCache::AccessCache(int num_stores, Mode mode)
+{
+//{{{
+    done = false;
+    SetupFSM();
+    transit.state = st_ready;
+    transit.event = no_ev;
+
+    AddStores(num_stores);
+
+    operation_mode = mode;
 //}}}
 }
 
@@ -134,16 +152,56 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
         cout<<"\t>>Entered ACKNOWLEDGE state..."<<endl;
     #endif
 
-    //check RWStores for conflicts
-    if(isMutexConflict(address_reg))
+    switch(operation_mode)
     {
-        st_tr.state = st_aborted;
-        st_tr.event = ev_abort;
-    }
-    else
-    {
-        st_tr.state = st_accepted;
-        st_tr.event = no_ev;
+    //{{{
+        case(mutex_md):
+        {
+            //check RWStores for conflicts
+            if(isMutexConflict(address_reg))
+            {
+                st_tr.state = st_aborted;
+                st_tr.event = ev_abort;
+            }
+            else
+            {
+                st_tr.state = st_accepted;
+                st_tr.event = no_ev;
+            }
+            break;
+        }
+        case(rwMutex_md):
+        {
+            //check RWStores for conflicts
+            if(isMutexRWConflict(address_reg))
+            {
+                st_tr.state = st_aborted;
+                st_tr.event = ev_abort;
+            }
+            else
+            {
+                st_tr.state = st_accepted;
+                st_tr.event = no_ev;
+            }
+            break;
+        }
+
+        case(opt_md):
+        {
+            //check RWStores for conflicts
+            if(isOptimisticConflict(address_reg))
+            {
+                st_tr.state = st_aborted;
+                st_tr.event = ev_abort;
+            }
+            else
+            {
+                st_tr.state = st_accepted;
+                st_tr.event = no_ev;
+            }            
+            break;
+        }
+    //}}}
     }
 
     return st_tr;
@@ -265,13 +323,16 @@ bool AccessCache::isMutexRWConflict(short address)
 
     extractFromControl(transaction_id, operation);
 
+    //if not a commit, just an access
     if(operation == READ_T || operation == WRITE_T)
     {
+        //check all the stores
         for(int i = 0; i < rw_stores.size(); i++)
         {
-            //dont waste time checking own transaction
+            //dont check own transaction store
             if(i != (int)transaction_id)
             {
+                //conflict if someone is writing
                 if(rw_stores[i].isWrite(address))
                     return true; //conflict found
             }
@@ -279,7 +340,19 @@ bool AccessCache::isMutexRWConflict(short address)
     }
     else if(operation == COMMIT_T)
     {
-
+        //if any onther transaction is reading ABORT
+        for(int i = 0; i < rw_stores.size(); i++)
+        {
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                //if its made it this far, are there really any checks to be made
+                //Only would need to check if there was priority transactions
+                //if(rw_stores[i].isWrite(address))
+                //    if(rw_stores[i].isCommit()) //this shouldn't be necessary for Mutex, bue w/e
+                //        return true; //conflict found
+            }
+        }
     }
 //}}}
 }
@@ -290,6 +363,10 @@ bool AccessCache::isOptimisticConflict(short address)
     unsigned char transaction_id, operation;
 
     extractFromControl(transaction_id, operation);
+
+    //did a write commit before it?
+    if(rw_stores[(int)transaction_id].isAbort())
+        return true;
 
     if(operation == READ_T)
     {
@@ -309,9 +386,37 @@ bool AccessCache::isOptimisticConflict(short address)
             }
         }
     }
+    //attempting a commit (isAbort already checked above!)
     else if(operation == COMMIT_T)
     {
-
+       //if commiting a write, need to abort all reads still in a transaction 
+       if(operation == WRITE_T)
+       {
+           short temp_addr;
+           //dequeue all the writes from transaction being commited
+           while((temp_addr = rw_stores[(int)transaction_id].Dequeue_Write()) >= 0)
+           {
+               //check that oher transactions are not useing the address
+                for(int i = 0; i < rw_stores.size(); i++)
+                {
+                    //dont waste time checking own transaction
+                    if(i != (int)transaction_id)
+                    {
+                        //if the address is accessed bu the transaction at all (read is the only real scenario)
+                        if(rw_stores[i].isAccess(temp_addr))
+                        {
+                            //abort the other transaction
+                            rw_stores[i].setAbort();
+                        }
+                    }
+                }
+           } 
+       }
+       //else, if its a read and it made it this far it should be okay
+       else if(operation == READ_T)
+       {
+            return false;
+       }
     }
 //}}}
 }
