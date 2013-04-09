@@ -313,6 +313,7 @@ bool AccessCache::isMutexConflict(short address)
             }
         }
     }
+    return false;
 //}}}
 }
 
@@ -389,34 +390,27 @@ bool AccessCache::isOptimisticConflict(short address)
     //attempting a commit (isAbort already checked above!)
     else if(operation == COMMIT_T)
     {
-       //if commiting a write, need to abort all reads still in a transaction 
-       if(operation == WRITE_T)
+       short temp_addr;
+       //dequeue all the writes from transaction being commited
+       while((temp_addr = rw_stores[(int)transaction_id].Dequeue_Write()) >= 0)
        {
-           short temp_addr;
-           //dequeue all the writes from transaction being commited
-           while((temp_addr = rw_stores[(int)transaction_id].Dequeue_Write()) >= 0)
-           {
-               //check that oher transactions are not useing the address
-                for(int i = 0; i < rw_stores.size(); i++)
+           //check that oher transactions are not useing the address
+            for(int i = 0; i < rw_stores.size(); i++)
+            {
+                //dont waste time checking own transaction
+                if(i != (int)transaction_id)
                 {
-                    //dont waste time checking own transaction
-                    if(i != (int)transaction_id)
+                    //if the address is accessed bu the transaction at all (read is the only real scenario)
+                    if(rw_stores[i].isAccess(temp_addr))
                     {
-                        //if the address is accessed bu the transaction at all (read is the only real scenario)
-                        if(rw_stores[i].isAccess(temp_addr))
-                        {
-                            //abort the other transaction
-                            rw_stores[i].setAbort();
-                        }
+                        //abort the other transaction
+                        rw_stores[i].setAbort();
                     }
                 }
-           } 
-       }
-       //else, if its a read and it made it this far it should be okay
-       else if(operation == READ_T)
-       {
-            return false;
-       }
+            }
+       } 
+       return false;
+
     }
 //}}}
 }
