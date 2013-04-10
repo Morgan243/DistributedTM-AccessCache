@@ -260,7 +260,11 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
     
     setCtrlOperation(ABORT_T);
 
+    //clear set store
     rw_stores[(int)transaction_id].Clear_All();
+
+    //transaction status set to idle
+    rw_stores[(int)transaction_id].setIdle();
 
     return st_tr;
 //}}}

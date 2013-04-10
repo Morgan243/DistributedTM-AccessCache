@@ -32,6 +32,7 @@ int RWStore::Enqueue_Read(unsigned short rd_addr)
 
 short RWStore::Dequeue_Read()
 {
+//{{{
     if(this->read_sets.size() != 0)
     {
         rd_front = this->read_sets.front();
@@ -41,6 +42,7 @@ short RWStore::Dequeue_Read()
     }
     else 
         return -1;
+//}}}
 }
 
 void RWStore::Clear_Reads()
@@ -50,6 +52,7 @@ void RWStore::Clear_Reads()
 
 int RWStore::Enqueue_Write(unsigned short wr_addr)
 {
+//{{{
     try
     {
         this->write_sets.push_back(wr_addr);
@@ -59,10 +62,12 @@ int RWStore::Enqueue_Write(unsigned short wr_addr)
     {
         cout<<"Exception in write enqueue: "<<e.what()<<endl;
     }
+//}}}
 }
 
 short RWStore::Dequeue_Write()
 {
+//{{{
    if(this->write_sets.size() != 0)
    {
        wr_front = this->write_sets.front();
@@ -72,8 +77,7 @@ short RWStore::Dequeue_Write()
    }
    else
        return -1;
-
-
+//}}}
 }
 
 void RWStore::Clear_Writes()
