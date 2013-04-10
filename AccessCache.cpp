@@ -11,6 +11,7 @@ AccessCache::AccessCache()
     transit.event = no_ev;
 
     operation_mode = DEFAULT_MODE;
+    enable_benchmarking = false;
 //}}}
 }
 
@@ -25,6 +26,7 @@ AccessCache::AccessCache(int num_stores)
     AddStores(num_stores);
 
     operation_mode = DEFAULT_MODE;
+    enable_benchmarking = false;
 //}}}
 }
 
@@ -39,6 +41,22 @@ AccessCache::AccessCache(int num_stores, Mode mode)
     AddStores(num_stores);
 
     operation_mode = mode;
+    enable_benchmarking = false;
+//}}}
+}
+
+AccessCache::AccessCache(int num_stores, Mode mode, bool benchmark)
+{
+//{{{
+    done = false;
+    SetupFSM();
+    transit.state = st_ready;
+    transit.event = no_ev;
+
+    AddStores(num_stores);
+
+    operation_mode = mode;
+    enable_benchmarking = benchmark;
 //}}}
 }
 
@@ -58,7 +76,7 @@ void AccessCache::AddStores(int num_stores)
 //{{{
     for(int i = 0; i < num_stores; i++)
     {
-        this->rw_stores.push_back(RWStore());
+        this->nodes.push_back(Node_Desc());
     }
 //}}}
 }
@@ -66,8 +84,8 @@ void AccessCache::AddStores(int num_stores)
 int AccessCache::AddStores()
 {
 //{{{
-    this->rw_stores.push_back(RWStore());
-    return this->rw_stores.size() - 1;
+    this->nodes.push_back(Node_Desc());
+    return this->nodes.size() - 1;
 //}}}
 }
 
@@ -226,16 +244,16 @@ StateTransition AccessCache::Accepted(StateTransition st_tr)
     if(operation != COMMIT_T)
     {
         if(operation == READ_T)
-            rw_stores[(int)transaction_id].Enqueue_Read(address_reg);
+            nodes[(int)transaction_id].rw_store.Enqueue_Read(address_reg);
         else
-            rw_stores[(int)transaction_id].Enqueue_Write(address_reg);
+            nodes[(int)transaction_id].rw_store.Enqueue_Write(address_reg);
 
         setCtrlOperation(ACCEPT_T);
     }
     else
     {
         //if commit, clear store
-        rw_stores[(int)transaction_id].Clear_All();
+        nodes[(int)transaction_id].rw_store.Clear_All();
 
         setCtrlOperation(COMMIT_T);
     }
@@ -261,10 +279,10 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
     setCtrlOperation(ABORT_T);
 
     //clear set store
-    rw_stores[(int)transaction_id].Clear_All();
+    nodes[(int)transaction_id].rw_store.Clear_All();
 
     //transaction status set to idle
-    rw_stores[(int)transaction_id].setIdle();
+    nodes[(int)transaction_id].rw_store.setIdle();
 
     return st_tr;
 //}}}
@@ -291,12 +309,12 @@ bool AccessCache::isMutexConflict(short address)
     if(operation == READ_T || operation == WRITE_T)
     {
         //if any onther transaction is reading or writing ABORT
-        for(int i = 0; i < rw_stores.size(); i++)
+        for(int i = 0; i < nodes.size(); i++)
         {
             //dont waste time checking own transaction
             if(i != (int)transaction_id)
             {
-                if(rw_stores[i].isAccess(address))
+                if(nodes[i].rw_store.isAccess(address))
                     return true; //conflict found
             }
         }
@@ -304,13 +322,13 @@ bool AccessCache::isMutexConflict(short address)
     else if(operation == COMMIT_T)
     {
         //if any onther transaction is reading or writing ABORT
-        for(int i = 0; i < rw_stores.size(); i++)
+        for(int i = 0; i < nodes.size(); i++)
         {
             //dont waste time checking own transaction
             if(i != (int)transaction_id)
             {
-                if(rw_stores[i].isAccess(address))
-                    if(rw_stores[i].isCommit()) //this shouldn't be necessary for Mutex, bue w/e
+                if(nodes[i].rw_store.isAccess(address))
+                    if(nodes[i].rw_store.isCommit()) //this shouldn't be necessary for Mutex, bue w/e
                         return true; //conflict found
             }
         }
@@ -330,13 +348,13 @@ bool AccessCache::isMutexRWConflict(short address)
     if(operation == READ_T || operation == WRITE_T)
     {
         //check all the stores
-        for(int i = 0; i < rw_stores.size(); i++)
+        for(int i = 0; i < nodes.size(); i++)
         {
             //dont check own transaction store
             if(i != (int)transaction_id)
             {
                 //conflict if someone is writing
-                if(rw_stores[i].isWrite(address))
+                if(nodes[i].rw_store.isWrite(address))
                     return true; //conflict found
             }
         }
@@ -344,7 +362,7 @@ bool AccessCache::isMutexRWConflict(short address)
     else if(operation == COMMIT_T)
     {
         //if any onther transaction is reading ABORT
-        for(int i = 0; i < rw_stores.size(); i++)
+        for(int i = 0; i < nodes.size(); i++)
         {
             //dont waste time checking own transaction
             if(i != (int)transaction_id)
@@ -368,23 +386,24 @@ bool AccessCache::isOptimisticConflict(short address)
     extractFromControl(transaction_id, operation);
 
     //did a write commit before it?
-    if(rw_stores[(int)transaction_id].isAbort())
+    if(nodes[(int)transaction_id].rw_store.isAbort())
         return true;
 
     if(operation == READ_T)
     {
+        
         //do anything?
         return false; //no conflict
     }
     else if(operation == WRITE_T)
     {
-        for(int i = 0; i < rw_stores.size(); i++)
+        for(int i = 0; i < nodes.size(); i++)
         {
             //dont waste time checking own transaction
             if(i != (int)transaction_id)
             {
                 //write-write conflicts can never turn out okay, abort them
-                if(rw_stores[i].isWrite(address))
+                if(nodes[i].rw_store.isWrite(address))
                     return true; //conflict found
             }
         }
@@ -394,19 +413,19 @@ bool AccessCache::isOptimisticConflict(short address)
     {
        short temp_addr;
        //dequeue all the writes from transaction being commited
-       while((temp_addr = rw_stores[(int)transaction_id].Dequeue_Write()) >= 0)
+       while((temp_addr = nodes[(int)transaction_id].rw_store.Dequeue_Write()) >= 0)
        {
            //check that oher transactions are not useing the address
-            for(int i = 0; i < rw_stores.size(); i++)
+            for(int i = 0; i < nodes.size(); i++)
             {
                 //dont waste time checking own transaction
                 if(i != (int)transaction_id)
                 {
                     //if the address is accessed bu the transaction at all (read is the only real scenario)
-                    if(rw_stores[i].isAccess(temp_addr))
+                    if(nodes[i].rw_store.isAccess(temp_addr))
                     {
                         //abort the other transaction
-                        rw_stores[i].setAbort();
+                        nodes[i].rw_store.setAbort();
                     }
                 }
             }

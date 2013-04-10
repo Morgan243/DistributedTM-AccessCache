@@ -23,14 +23,29 @@ struct StateTransition
     Event event;
 };
 
+//Keep track of critical section parallelism for benchmarking
+struct ParallelAccess_Desc
+{
+    unsigned short address;             //what address did this happen on
+    int node_one, node_two;             //id of nodes involved
+    char node_one_op, node_two_op;      //what access type did each node do
+};
+
+struct Node_Desc
+{
+    RWStore rw_store;                         //each transactions read and write set FIFO and status reg
+    std::vector<ParallelAccess_Desc> parallel_accesses;     //keep track of all the parallel access that are made throughout execution.   
+};
+
 class AccessCache
 {
     private:
-        bool done;                                              //transition through state machine until this is true
+        bool done, enable_benchmarking;                                              //transition through state machine until this is true
         Mode operation_mode;
-        std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
-        StateTransition transit;
+        //std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
+        std::vector<Node_Desc> nodes;
 
+        StateTransition transit;
         
         StateTransition Transit(StateTransition st_tr);
             
@@ -54,6 +69,7 @@ class AccessCache
         AccessCache();
         AccessCache(int num_stores);
         AccessCache(int num_stores, Mode mode);
+        AccessCache(int num_stores, Mode mode, bool benchmark);
         ~AccessCache();
 
         unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXXT TTTT)

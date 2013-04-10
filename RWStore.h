@@ -7,6 +7,7 @@
 #define STATUS_UNFINISHED 0x02
 #define STATUS_ABORT 0x03           //set by  other transactions in optimistic scheme
 
+
 class RWStore
 {
     private:
@@ -17,7 +18,7 @@ class RWStore
 
         unsigned char status;                 //indicates the finality of the transactions changes
 
-
+        unsigned int num_aborts, num_commits;
     public:
         RWStore();
         ~RWStore();
@@ -46,4 +47,10 @@ class RWStore
         bool isRead(unsigned short address);
         bool isWrite(unsigned short address);
         bool isAccess(unsigned short address);         //check for either read or write
+
+//        void AddParallelAccess(unsigned short addr, int node_1, char node_two_op, int node_2, char node_2_op);
+//        void AddParallelAccess(ParallelAccess_Desc access_desc);
+//
+//        int getAmountOfParallelAccess();
+//        vector<ParallelAccess_Desc> getParallelAccesses();
 };
