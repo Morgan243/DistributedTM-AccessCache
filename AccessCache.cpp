@@ -134,7 +134,7 @@ StateTransition AccessCache::Transit(StateTransition st_tr)
 StateTransition AccessCache::Ready(StateTransition st_tr)
 {
 //{{{
-    #ifdef DEBUG
+    #if DEBUG
         cout<<"\t>>Entered READY state..."<<endl;
     #endif
         
@@ -148,7 +148,7 @@ StateTransition AccessCache::Ready(StateTransition st_tr)
 StateTransition AccessCache::Acknowledge(StateTransition st_tr)
 {
 //{{{
-    #ifdef DEBUG
+    #if DEBUG
         cout<<"\t>>Entered ACKNOWLEDGE state..."<<endl;
     #endif
 
@@ -211,7 +211,7 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
 StateTransition AccessCache::Accepted(StateTransition st_tr)
 {
 //{{{
-    #ifdef DEBUG
+    #if DEBUG
         cout<<"\t>>Entered ACCEPTED state..."<<endl;
     #endif
 
@@ -247,7 +247,7 @@ StateTransition AccessCache::Accepted(StateTransition st_tr)
 StateTransition AccessCache::Aborted(StateTransition st_tr)
 {
 //{{{
-    #ifdef DEBUG
+    #if DEBUG
         cout<<"\t>>Entered ABORTED state..."<<endl;
     #endif
 
@@ -287,8 +287,6 @@ bool AccessCache::isMutexConflict(short address)
     unsigned char transaction_id, operation;
 
     extractFromControl(transaction_id, operation);
-
-    cout<<"\t\tTransaction ID: "<<(int)transaction_id<<endl;
 
     if(operation == READ_T || operation == WRITE_T)
     {

@@ -19,6 +19,7 @@ void RWStore::Clear_All()
 
 int RWStore::Enqueue_Read(unsigned short rd_addr)
 {
+//{{{
     try
     {
         this->read_sets.push_back(rd_addr);
@@ -28,6 +29,7 @@ int RWStore::Enqueue_Read(unsigned short rd_addr)
     {
         cout<<"Exception in read enqueue: "<< e.what()<<endl;
     }
+//}}}
 }
 
 short RWStore::Dequeue_Read()
