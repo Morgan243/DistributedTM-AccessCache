@@ -19,6 +19,8 @@ AccessCache::AccessCache(int num_stores)
 {
 //{{{
     done = false;
+    enable_benchmarking = false;
+    mark = 0;
     SetupFSM();
     transit.state = st_ready;
     transit.event = no_ev;
@@ -26,7 +28,6 @@ AccessCache::AccessCache(int num_stores)
     AddStores(num_stores);
 
     operation_mode = DEFAULT_MODE;
-    enable_benchmarking = false;
 //}}}
 }
 
@@ -34,6 +35,8 @@ AccessCache::AccessCache(int num_stores, Mode mode)
 {
 //{{{
     done = false;
+    enable_benchmarking = false;
+    mark = 0;
     SetupFSM();
     transit.state = st_ready;
     transit.event = no_ev;
@@ -41,7 +44,6 @@ AccessCache::AccessCache(int num_stores, Mode mode)
     AddStores(num_stores);
 
     operation_mode = mode;
-    enable_benchmarking = false;
 //}}}
 }
 
@@ -49,6 +51,8 @@ AccessCache::AccessCache(int num_stores, Mode mode, bool benchmark)
 {
 //{{{
     done = false;
+    enable_benchmarking = benchmark;
+    mark = 0;
     SetupFSM();
     transit.state = st_ready;
     transit.event = no_ev;
@@ -56,7 +60,6 @@ AccessCache::AccessCache(int num_stores, Mode mode, bool benchmark)
     AddStores(num_stores);
 
     operation_mode = mode;
-    enable_benchmarking = benchmark;
 //}}}
 }
 
@@ -169,6 +172,8 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
     #if DEBUG
         cout<<"\t>>Entered ACKNOWLEDGE state..."<<endl;
     #endif
+
+    mark++;
 
     switch(operation_mode)
     {

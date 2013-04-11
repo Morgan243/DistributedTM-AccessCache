@@ -29,6 +29,7 @@ struct ParallelAccess_Desc
     unsigned short address;             //what address did this happen on
     int node_one, node_two;             //id of nodes involved
     char node_one_op, node_two_op;      //what access type did each node do
+    unsigned int transaction_mark;
 };
 
 struct Node_Desc
@@ -42,6 +43,7 @@ class AccessCache
     private:
         bool done, enable_benchmarking;                                              //transition through state machine until this is true
         Mode operation_mode;
+        unsigned int mark;
         //std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
         std::vector<Node_Desc> nodes;
 
