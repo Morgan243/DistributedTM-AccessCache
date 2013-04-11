@@ -7,6 +7,11 @@
 #define STATUS_UNFINISHED 0x02
 #define STATUS_ABORT 0x03           //set by  other transactions in optimistic scheme
 
+#define READ_T 0x00
+#define WRITE_T 0x01
+#define ACCEPT_T 0x02
+#define COMMIT_T 0x03
+#define ABORT_T 0x04
 
 class RWStore
 {
@@ -47,6 +52,8 @@ class RWStore
         bool isRead(unsigned short address);
         bool isWrite(unsigned short address);
         bool isAccess(unsigned short address);         //check for either read or write
+
+        unsigned char getAccess(unsigned short address);
 
 //        void AddParallelAccess(unsigned short addr, int node_1, char node_two_op, int node_2, char node_2_op);
 //        void AddParallelAccess(ParallelAccess_Desc access_desc);

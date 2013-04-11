@@ -168,3 +168,14 @@ bool RWStore::isAccess(unsigned short address)
 //}}}
 }
 
+unsigned char RWStore::getAccess(unsigned short address)
+{
+//{{{
+    if(isWrite(address))
+        return WRITE_T;
+    else if(isRead(address))
+        return READ_T;
+    else
+        return 0xFF;
+//}}}
+}

@@ -396,8 +396,6 @@ bool AccessCache::isOptimisticConflict(short address)
 
     if(operation == READ_T)
     {
-        
-        //do anything?
         return false; //no conflict
     }
     else if(operation == WRITE_T)
@@ -410,6 +408,96 @@ bool AccessCache::isOptimisticConflict(short address)
                 //write-write conflicts can never turn out okay, abort them
                 if(nodes[i].rw_store.isWrite(address))
                     return true; //conflict found
+            }
+        }
+    }
+    //attempting a commit (isAbort already checked above!)
+    else if(operation == COMMIT_T)
+    {
+       short temp_addr;
+       //dequeue all the writes from transaction being commited
+       while((temp_addr = nodes[(int)transaction_id].rw_store.Dequeue_Write()) >= 0)
+       {
+           //check that oher transactions are not useing the address
+            for(int i = 0; i < nodes.size(); i++)
+            {
+                //dont waste time checking own transaction
+                if(i != (int)transaction_id)
+                {
+                    //if the address is accessed bu the transaction at all (read is the only real scenario)
+                    if(nodes[i].rw_store.isAccess(temp_addr))
+                    {
+                        //abort the other transaction
+                        nodes[i].rw_store.setAbort();
+                    }
+                }
+            }
+       } 
+       return false;
+
+    }
+//}}}
+}
+
+bool AccessCache::isOptimisticConflict_benchmark(short address)
+{
+//{{{
+    unsigned char transaction_id, operation;
+
+    extractFromControl(transaction_id, operation);
+
+    //did a write commit before it?
+    if(nodes[(int)transaction_id].rw_store.isAbort())
+        return true;
+
+    if(operation == READ_T)
+    {
+        if(enable_benchmarking)
+        {
+            //setup the access identifier
+            temp_accesss.address = address;
+            temp_accesss.node_one = (int)transaction_id;
+            temp_accesss.node_one_op = operation;
+
+            //go through all the nodes
+            for(int i = 0; i < nodes.size(); i++)
+            {
+                //dont check itself
+                if( i != (int)transaction_id)
+                {
+                    //get the access that a transaction has on the address, if any
+                    if( (temp_accesss.node_two_op = nodes[i].rw_store.getAccess(address)) != 0xFF)
+                    {
+                        //set node identifier
+                        temp_accesss.node_two = i;
+                        
+                        //add the access descriptor to pending
+                        nodes[(int)transaction_id].pending_accesses.push_back(temp_accesss);
+                    }
+                }
+            }
+        }
+
+        return false; //no conflict
+    }
+    else if(operation == WRITE_T)
+    {
+        for(int i = 0; i < nodes.size(); i++)
+        {
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                if((temp_accesss.node_two_op = nodes[i].rw_store.getAccess(address)) != 0xFF)
+                {
+                    //write-write conflicts can never turn out okay, abort them
+                    if(temp_accesss.node_two_op == WRITE_T)
+                        return true; //conflict found
+                    else
+                    {
+                        temp_accesss.node_two = i;
+                        nodes[(int)transaction_id].pending_accesses.push_back(temp_accesss);
+                    }
+                }
             }
         }
     }

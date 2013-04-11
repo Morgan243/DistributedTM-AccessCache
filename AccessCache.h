@@ -5,11 +5,6 @@
 
 #define DEBUG 0
 
-#define READ_T 0x00
-#define WRITE_T 0x01
-#define ACCEPT_T 0x02
-#define COMMIT_T 0x03
-#define ABORT_T 0x04
 
 enum State {st_ready = 0, st_acknowledge, st_accepted, st_aborted};
 enum Event {no_ev = 0, ev_control, ev_abort, ev_accept, ev_commit, ev_error};
@@ -34,17 +29,18 @@ struct ParallelAccess_Desc
 
 struct Node_Desc
 {
-    RWStore rw_store;                         //each transactions read and write set FIFO and status reg
+    RWStore rw_store;                                       //each transactions read and write set FIFO and status reg
     std::vector<ParallelAccess_Desc> parallel_accesses;     //keep track of all the parallel access that are made throughout execution.   
+    std::vector<ParallelAccess_Desc> pending_accesses;      //keep track of all the parallel access that are made throughout execution.   
 };
 
 class AccessCache
 {
     private:
-        bool done, enable_benchmarking;                                              //transition through state machine until this is true
+        bool done, enable_benchmarking;                           //transition through state machine until this is true
         Mode operation_mode;
         unsigned int mark;
-        //std::vector<RWStore> rw_stores;                         //each transactions read and write set FIFO and status reg
+        ParallelAccess_Desc temp_accesss;
         std::vector<Node_Desc> nodes;
 
         StateTransition transit;
@@ -62,6 +58,8 @@ class AccessCache
         bool isMutexConflict(short address);
         bool isMutexRWConflict(short address);
         bool isOptimisticConflict(short address);
+
+        bool isOptimisticConflict_benchmark(short address);
 
         void setCtrlOperation(unsigned char op);
 
