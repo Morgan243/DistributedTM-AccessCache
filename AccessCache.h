@@ -29,9 +29,9 @@ struct ParallelAccess_Desc
 
 struct Node_Desc
 {
-    RWStore rw_store;                                       //each transactions read and write set FIFO and status reg
-    std::vector<ParallelAccess_Desc> parallel_accesses;     //keep track of all the parallel access that are made throughout execution.   
-    std::vector<ParallelAccess_Desc> pending_accesses;      //keep track of all the parallel access that are made throughout execution.   
+    RWStore rw_store;                                              //each transactions read and write set FIFO and status reg
+    std::vector< std::vector<ParallelAccess_Desc> > parallel_accesses;  //each vector<ParallelAccess_Desc> represents a nodes parallel access with this node
+    std::vector< std::vector <ParallelAccess_Desc> > pending_accesses;             //keep track of all the parallel access that are made throughout execution.   
 };
 
 class AccessCache
@@ -59,6 +59,7 @@ class AccessCache
         bool isMutexRWConflict(short address);
         bool isOptimisticConflict(short address);
 
+        bool isMutexRWConflict_benchmark(short address);
         bool isOptimisticConflict_benchmark(short address);
 
         void setCtrlOperation(unsigned char op);

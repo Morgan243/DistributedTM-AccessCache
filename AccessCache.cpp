@@ -80,6 +80,9 @@ void AccessCache::AddStores(int num_stores)
     for(int i = 0; i < num_stores; i++)
     {
         this->nodes.push_back(Node_Desc());
+        
+        //push
+        this->nodes.back().pending_accesses.push_back(vector<ParallelAccess_Desc>(num_stores));
     }
 //}}}
 }
@@ -491,10 +494,16 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                 {
                     //write-write conflicts can never turn out okay, abort them
                     if(temp_accesss.node_two_op == WRITE_T)
+                    {
+                        //aborted, so pending parallel access are not going to happen
+                        nodes[(int)transaction_id].pending_accesses.clear();
                         return true; //conflict found
+                    }
                     else
                     {
+                        //set node identifier
                         temp_accesss.node_two = i;
+                        //add the access descriptor
                         nodes[(int)transaction_id].pending_accesses.push_back(temp_accesss);
                     }
                 }
@@ -515,16 +524,17 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                 if(i != (int)transaction_id)
                 {
                     //if the address is accessed bu the transaction at all (read is the only real scenario)
-                    if(nodes[i].rw_store.isAccess(temp_addr))
-                    {
-                        //abort the other transaction
-                        nodes[i].rw_store.setAbort();
+                    if((temp_accesss.node_two_op = nodes[i].rw_store.getAccess(address)) != 0xFF)                    {
+                        {
+                            
+                            //abort the other transaction
+                            nodes[i].rw_store.setAbort();
+                        }
                     }
                 }
             }
        } 
        return false;
-
     }
 //}}}
 }
