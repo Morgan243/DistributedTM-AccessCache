@@ -29,9 +29,12 @@ struct ParallelAccess_Desc
 
 struct Node_Desc
 {
-    RWStore rw_store;                                              //each transactions read and write set FIFO and status reg
-    std::vector< std::vector<ParallelAccess_Desc> > parallel_accesses;  //each vector<ParallelAccess_Desc> represents a nodes parallel access with this node
-    std::vector< std::vector <ParallelAccess_Desc> > pending_accesses;             //keep track of all the parallel access that are made throughout execution.   
+    RWStore rw_store;        //each transactions read and write set FIFO and status reg
+   
+    //each vector<ParallelAccess_Desc> represents a nodes parallel access with this node
+    std::vector< std::vector<ParallelAccess_Desc> > confirmed_accesses; 
+    //keep track of all the parallel access that are made throughout execution.   
+    std::vector< std::vector <ParallelAccess_Desc> > pending_accesses; 
 };
 
 class AccessCache
@@ -39,7 +42,7 @@ class AccessCache
     private:
         bool done, enable_benchmarking;                           //transition through state machine until this is true
         Mode operation_mode;
-        unsigned int mark;
+        unsigned int number_nodes;
         ParallelAccess_Desc temp_accesss;
         std::vector<Node_Desc> nodes;
 
@@ -85,6 +88,8 @@ class AccessCache
         bool RunFSM();
         
         void Check();
+        void printParallelAccesses(int node_id);
+        std::string getFriendlyOperationName(unsigned char op);
 
 };
 #endif
