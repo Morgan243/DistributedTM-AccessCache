@@ -41,6 +41,7 @@ class RWStore
         int Enqueue_Write(unsigned short wr_addr);
         short Dequeue_Write();
         void Clear_Writes();
+        std::vector<unsigned short> Get_Writes();
 
         void setIdle();
         void setBegin();
