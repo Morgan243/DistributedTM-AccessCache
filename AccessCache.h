@@ -65,6 +65,8 @@ class AccessCache
         bool isMutexRWConflict_benchmark(short address);
         bool isOptimisticConflict_benchmark(short address);
 
+        void clearPendingParallel(int t_id);
+
         void setCtrlOperation(unsigned char op);
 
         void extractFromControl(unsigned char &transaction_id, unsigned char &operation);
@@ -75,6 +77,8 @@ class AccessCache
         AccessCache(int num_stores, Mode mode);
         AccessCache(int num_stores, Mode mode, bool benchmark);
         ~AccessCache();
+
+        void Init(int num_stores, Mode mode, bool benchmark);
 
         unsigned char control_reg;                          //what (LSB) transaction & (MSB) operation? (0bXXXT TTTT)
         unsigned short address_reg;                         //what address is the operation taking place?
