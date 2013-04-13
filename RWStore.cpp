@@ -87,6 +87,11 @@ void RWStore::Clear_Writes()
     this->write_sets.clear();
 }
 
+vector<unsigned short> RWStore::Get_Writes()
+{
+    return this->write_sets;
+}
+
 void RWStore::setIdle()
 {
     status = STATUS_IDLE;

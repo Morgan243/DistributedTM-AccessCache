@@ -65,6 +65,7 @@ class AccessCache
         bool isMutexRWConflict_benchmark(short address);
         bool isOptimisticConflict_benchmark(short address);
 
+
         void clearPendingParallel(int t_id);
 
         void setCtrlOperation(unsigned char op);
@@ -91,6 +92,7 @@ class AccessCache
         
         bool RunFSM();
         
+        void clearNodeSets(int t_id);
         void Check();
         void printParallelAccesses(int node_id);
         std::string getFriendlyOperationName(unsigned char op);
