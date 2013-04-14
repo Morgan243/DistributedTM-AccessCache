@@ -3,7 +3,7 @@ COMP=g++
 CROSS_PPC=powerpc-linux-g++
 
 #we'll want to try and use C11 threads if the cross compiler can do it
-FLAGS=-lpthread --std=c++11 -ggdb
+FLAGS=-lpthread -ggdb
 OUT=test
 
 x86 : tb_x86
