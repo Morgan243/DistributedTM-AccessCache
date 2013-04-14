@@ -66,7 +66,8 @@ class AccessCache
         bool isOptimisticConflict_benchmark(short address);
 
 
-        void clearPendingParallel(int t_id);
+        void clearPendingParallel(unsigned int t_id);
+        void clearPendingFromAll(unsigned int t_id);
 
         void setCtrlOperation(unsigned char op);
 

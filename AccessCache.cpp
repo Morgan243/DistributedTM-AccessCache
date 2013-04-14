@@ -293,10 +293,12 @@ StateTransition AccessCache::Accepted(StateTransition st_tr)
             nodes[(int)transaction_id].rw_store.Enqueue_Write(address_reg);
 
         setCtrlOperation(ACCEPT_T);
+
     }
     else
     {
         setCtrlOperation(COMMIT_T);
+        nodes[(unsigned int)transaction_id].rw_store.setCommit();
     }
 
     return st_tr;
@@ -323,7 +325,8 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
     nodes[(int)transaction_id].rw_store.Clear_All();
 
     //transaction status set to idle
-    nodes[(int)transaction_id].rw_store.setIdle();
+    //nodes[(int)transaction_id].rw_store.setIdle();
+    nodes[(int)transaction_id].rw_store.setAbort();
 
     return st_tr;
 //}}}
@@ -482,22 +485,28 @@ bool AccessCache::isOptimisticConflict(short address)
 bool AccessCache::isOptimisticConflict_benchmark(short address)
 {
 //{{{
+    bool conflict = false;
     unsigned char transaction_id, operation;
 
     extractFromControl(transaction_id, operation);
 
+    nodes[(unsigned int)transaction_id].rw_store.setBegin();
+
     //did a write commit before it?
     if(nodes[(unsigned int)transaction_id].rw_store.isAbort())
     {
+    //{{{
         cout<<"Node "<<(unsigned int)transaction_id<<" was aborted, clearing pending..."<<endl<<endl;
         //being aborted, clear the pending parallel
-        clearPendingParallel((unsigned int)transaction_id);
+        //clearPendingParallel((unsigned int)transaction_id);
 
-        return true;
+        conflict = true;
+        //return true;
+    //}}}
     }
-
-    if(operation == READ_T)
+    else if(operation == READ_T)
     {
+    //{{{
         //setup the access identifier
         temp_accesss.address = address;
         temp_accesss.node_one = (unsigned int)transaction_id;
@@ -515,25 +524,32 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                 //get the access that a transaction has on the address, if any
                 if( (temp_accesss.node_two_op  == READ_T) || (temp_accesss.node_two_op  == WRITE_T))
                 {
+                    if(temp_accesss.node_two_op == WRITE_T && nodes[i].rw_store.isCommit())
+                    {
+                        cout<<"Aborting due to attempted read mid-commit!"<<endl;
+                        conflict = true;
+                    }
+                    else
+                    {
+                        cout<<"Operation READ performed in parallel on ["<<address<<"] "<< 
+                            (unsigned int)temp_accesss.node_two_op<<endl;
+                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
+                        cout<<"\tOther node: "<<i<<endl<<endl;
 
-                    cout<<"Operation READ performed in parallel on ["<<address<<"] "<< 
-                        (unsigned int)temp_accesss.node_two_op<<endl;
-                    cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
-                    cout<<"\tOther node: "<<i<<endl<<endl;
-
-                    //set node identifier
-                    temp_accesss.node_two = i;
-                    
-                    //add the access descriptor to pending
-                    nodes[(unsigned int)transaction_id].pending_accesses[i].push_back(temp_accesss);
+                        //set node identifier
+                        temp_accesss.node_two = i;
+                        
+                        //add the access descriptor to pending
+                        nodes[(unsigned int)transaction_id].pending_accesses[i].push_back(temp_accesss);
+                    }
                 }
             }
         }
-
-        return false; //no conflict
+    //}}}
     }
     else if(operation == WRITE_T)
     {
+    //{{{
         for(unsigned int i = 0; i < nodes.size(); i++)
         {
             //dont waste time checking own transaction
@@ -548,14 +564,11 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                     //write-write conflicts can never turn out okay, abort them
                     if(temp_accesss.node_two_op == WRITE_T)
                     {
-                        cout<<"Operation WRITE being aborted on ["<<address<<"]"<<endl;
+                        cout<<"WRITE being ABORTED on ["<<address<<"]"<<endl;
                         cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
                         cout<<"\tOther node: "<<i<<endl<<endl;
 
-                        //aborted, so pending parallel accesses are not going to happen
-                        clearPendingParallel((unsigned int)transaction_id);
-
-                        return true; //conflict found
+                        conflict = true;
                     }
                     else
                     {
@@ -565,26 +578,23 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
 
                         //set node identifier
                         temp_accesss.node_two = i;
+
                         //add the access descriptor
                         nodes[(unsigned int)transaction_id].pending_accesses[i].push_back(temp_accesss);
-
-                        //return false;
                     }
                 }
             }
         }
-        //if made it here, no conflicts found
-        return false;
+    //}}}
     }
     //attempting a commit (isAbort already checked above!)
     else if(operation == COMMIT_T)
     {
-       short temp_addr;
+    //{{{
        vector<unsigned short> temp_writes = nodes[(unsigned int)transaction_id].rw_store.Get_Writes();
 
        //need to abort any transactions that are accessing this transactions write addresses
        //dequeue all the writes from transaction being commited
-       //while((temp_addr = nodes[(int)transaction_id].rw_store.Dequeue_Write()) >= 0)
        for(unsigned int k = 0 ; k < temp_writes.size(); k++)
        {
            //check that oher transactions are not useing the address
@@ -593,19 +603,27 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                 //dont waste time checking own transaction
                 if(i != (unsigned int)transaction_id)
                 {
-
                     //get the opposing nodes access
                     temp_accesss.node_two_op = nodes[i].rw_store.getAccess(temp_writes[k]); 
 
                     //get the access that a transaction has on the address, if any
                     if( (temp_accesss.node_two_op  == READ_T) || (temp_accesss.node_two_op  == WRITE_T))
                     {
-                            cout<<"Commit is aborting another transaction from node "<<i<<" on ["<< temp_writes[k]<<"]"<<endl<<endl;
-                            //delete pending accesses from this transaction (i) in the commiting transaction (transaction_id)
-                            nodes[(unsigned int)transaction_id].pending_accesses[i].clear();
+                        cout<<"Commit is aborting another transaction from node "<<i<<" on ["<< temp_writes[k]<<"]"<<endl<<endl;
+                        //delete pending accesses from this transaction (i) in the commiting transaction (transaction_id)
+                        nodes[(unsigned int)transaction_id].pending_accesses[i].clear();
 
-                            //abort the other transaction
-                            nodes[i].rw_store.setAbort();
+                        clearPendingFromAll(i);
+                        clearPendingParallel(i);
+
+                        //abort the other transaction
+                        nodes[i].rw_store.setAbort();
+                    }
+                    else if( nodes[i].rw_store.isAbort())
+                    {
+                        nodes[(unsigned int)transaction_id].pending_accesses[i].clear();
+                        clearPendingFromAll(i);
+                        clearPendingParallel(i);
                     }
                 }
             }
@@ -624,8 +642,17 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
 
         nodes[(unsigned int)transaction_id].rw_store.setCommit();
 
-        return false;
+        conflict = false;
+    //}}}
     }
+
+    if(conflict)
+    {
+        clearPendingFromAll((unsigned int)transaction_id);
+        clearPendingParallel((unsigned int)transaction_id);
+    }
+
+    return conflict;
 //}}}
 }
 
@@ -635,7 +662,16 @@ void AccessCache::clearNodeSets(int t_id)
     nodes[t_id].rw_store.setIdle();
 }
 
-void AccessCache::clearPendingParallel(int t_id)
+void AccessCache::clearPendingFromAll(unsigned int t_id)
+{
+    //clear transaction t_id from all other nodes pending
+    for(int i = 0; i < nodes.size(); i++)
+    {
+        nodes[i].pending_accesses[t_id].clear();
+    }
+}
+
+void AccessCache::clearPendingParallel(unsigned int t_id)
 {
     for(int i = 0; i < nodes[t_id].pending_accesses.size(); i++)
     {
