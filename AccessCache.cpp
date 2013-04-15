@@ -326,7 +326,8 @@ StateTransition AccessCache::Aborted(StateTransition st_tr)
 
     //transaction status set to idle
     //nodes[(int)transaction_id].rw_store.setIdle();
-    nodes[(int)transaction_id].rw_store.setAbort();
+   // nodes[(int)transaction_id].rw_store.setAbort();
+    nodes[(unsigned int)transaction_id].rw_store.setBegin();
 
     return st_tr;
 //}}}
@@ -435,6 +436,17 @@ bool AccessCache::isOptimisticConflict(short address)
 
     if(operation == READ_T)
     {
+        //if reading a location that has a write set and the nodes commit is set, abort!
+        for(int i = 0; i< nodes.size(); i++)
+        {
+            if(i != (unsigned int)transaction_id)
+            {
+                //C++'s short circuiting shouldmake this a quick check most of the time
+                if(nodes[i].rw_store.isCommit() && nodes[i].rw_store.isWrite(address))
+                    return true;
+            }
+        }
+
         return false; //no conflict
     }
     else if(operation == WRITE_T)
