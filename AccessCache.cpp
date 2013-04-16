@@ -217,16 +217,33 @@ StateTransition AccessCache::Acknowledge(StateTransition st_tr)
         }
         case(rwMutex_md):
         {
-            //check RWStores for conflicts
-            if(isMutexRWConflict(address_reg))
+            if(enable_benchmarking)
             {
-                st_tr.state = st_aborted;
-                st_tr.event = ev_abort;
+                //check RWStores for conflicts
+                if(isMutexRWConflict_benchmark(address_reg))
+                {
+                    st_tr.state = st_aborted;
+                    st_tr.event = ev_abort;
+                }
+                else
+                {
+                    st_tr.state = st_accepted;
+                    st_tr.event = no_ev;
+                }
             }
             else
             {
-                st_tr.state = st_accepted;
-                st_tr.event = no_ev;
+                //check RWStores for conflicts
+                if(isMutexRWConflict(address_reg))
+                {
+                    st_tr.state = st_aborted;
+                    st_tr.event = ev_abort;
+                }
+                else
+                {
+                    st_tr.state = st_accepted;
+                    st_tr.event = no_ev;
+                }
             }
             break;
         }
@@ -491,6 +508,103 @@ bool AccessCache::isOptimisticConflict(short address)
        return false;
     }
     cout<<"LOLOLOL, did not return in conflict logic!!!!"<<endl;
+//}}}
+}
+
+bool AccessCache::isMutexRWConflict_benchmark(short address)
+{
+//{{{
+    bool conflict = false;
+    unsigned char transaction_id, operation;
+
+    extractFromControl(transaction_id, operation);
+
+    nodes[(unsigned int)transaction_id].rw_store.setBegin();
+
+    //if not a commit, just an access
+    if(operation == READ_T) 
+    {
+        temp_accesss.address = address;
+        temp_accesss.node_one = (unsigned int)transaction_id;
+        temp_accesss.node_one_op = operation;
+
+        //check all the stores
+        for(int i = 0; i < nodes.size(); i++)
+        {
+            //dont check own transaction store
+            if(i != (int)transaction_id)
+            {
+                temp_accesss.node_two_op = nodes[i].rw_store.getAccess(address);
+
+                if(temp_accesss.node_two_op == READ_T)
+                {
+                    //parallel access is occuring!
+                    temp_accesss.node_two = i;
+
+                    nodes[(unsigned int)transaction_id].pending_accesses[i].push_back(temp_accesss);
+                }
+                else if(temp_accesss.node_two_op == WRITE_T)
+                {
+                    //need to abort and clear parallel access
+                    conflict = true;
+                }
+            }
+        }
+    }
+    else if(operation == WRITE_T) 
+    {
+        //check all the stores
+        for(int i = 0; i < nodes.size(); i++)
+        {
+            //dont check own transaction store
+            if(i != (int)transaction_id)
+            {
+                temp_accesss.node_two_op = nodes[i].rw_store.getAccess(address);
+
+                if(temp_accesss.node_two_op == READ_T || temp_accesss.node_two_op == WRITE_T)
+                {
+                    //need to abort and clear parallel access
+                    conflict = true;
+                }
+            }
+        }
+    }
+    else if(operation == COMMIT_T)
+    {
+        //if any onther transaction is reading ABORT
+        for(int i = 0; i < nodes.size(); i++)
+        {
+            //dont waste time checking own transaction
+            if(i != (int)transaction_id)
+            {
+                //if its made it this far, are there really any checks to be made
+                //Only would need to check if there was priority transactions
+                //if(rw_stores[i].isWrite(address))
+                //    if(rw_stores[i].isCommit()) //this shouldn't be necessary for Mutex, bue w/e
+                //        return true; //conflict found
+            }
+        }
+        nodes[(unsigned int)transaction_id].rw_store.setCommit();
+
+       //append all of pending access to confirmed accesses
+       for(int i = 0; i < nodes[(unsigned int)(transaction_id)].pending_accesses.size(); i++)
+       {
+            nodes[(unsigned int)(transaction_id)].confirmed_accesses[i].insert(
+                    nodes[(unsigned int)(transaction_id)].confirmed_accesses[i].end(),
+                    nodes[(unsigned int)(transaction_id)].pending_accesses[i].begin(),
+                    nodes[(unsigned int)(transaction_id)].pending_accesses[i].end());
+       }
+
+        clearPendingParallel((unsigned int)transaction_id);
+    }
+
+    if(conflict)
+    {
+        clearPendingFromAll((unsigned int)transaction_id);
+        clearPendingParallel((unsigned int)transaction_id);
+    }
+
+    return conflict;
 //}}}
 }
 
