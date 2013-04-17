@@ -622,7 +622,7 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
     if(nodes[(unsigned int)transaction_id].rw_store.isAbort())
     {
     //{{{
-        cout<<"Node "<<(unsigned int)transaction_id<<" was aborted, clearing pending..."<<endl<<endl;
+        //cout<<"Node "<<(unsigned int)transaction_id<<" was aborted, clearing pending..."<<endl<<endl;
         //being aborted, clear the pending parallel
         //clearPendingParallel((unsigned int)transaction_id);
 
@@ -652,15 +652,15 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                 {
                     if(temp_accesss.node_two_op == WRITE_T && nodes[i].rw_store.isCommit())
                     {
-                        cout<<"Aborting due to attempted read mid-commit!"<<endl;
+                        //cout<<"Aborting due to attempted read mid-commit!"<<endl;
                         conflict = true;
                     }
                     else
                     {
-                        cout<<"Operation READ performed in parallel on ["<<address<<"] "<< 
-                            (unsigned int)temp_accesss.node_two_op<<endl;
-                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
-                        cout<<"\tOther node: "<<i<<endl<<endl;
+//                        cout<<"Operation READ performed in parallel on ["<<address<<"] "<< 
+//                            (unsigned int)temp_accesss.node_two_op<<endl;
+//                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
+//                        cout<<"\tOther node: "<<i<<endl<<endl;
 
                         //set node identifier
                         temp_accesss.node_two = i;
@@ -690,17 +690,17 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                     //write-write conflicts can never turn out okay, abort them
                     if(temp_accesss.node_two_op == WRITE_T)
                     {
-                        cout<<"WRITE being ABORTED on ["<<address<<"]"<<endl;
-                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
-                        cout<<"\tOther node: "<<i<<endl<<endl;
+//                        cout<<"WRITE being ABORTED on ["<<address<<"]"<<endl;
+//                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
+//                        cout<<"\tOther node: "<<i<<endl<<endl;
 
                         conflict = true;
                     }
                     else
                     {
-                        cout<<"Operation WRITE performed in parallel on ["<<address<<"]"<<endl;
-                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
-                        cout<<"\tOther node: "<<i<<endl<<endl;
+//                        cout<<"Operation WRITE performed in parallel on ["<<address<<"]"<<endl;
+//                        cout<<"\tThis node: "<< (unsigned int) transaction_id<<endl;
+//                        cout<<"\tOther node: "<<i<<endl<<endl;
 
                         //set node identifier
                         temp_accesss.node_two = i;
@@ -735,7 +735,7 @@ bool AccessCache::isOptimisticConflict_benchmark(short address)
                     //get the access that a transaction has on the address, if any
                     if( (temp_accesss.node_two_op  == READ_T) || (temp_accesss.node_two_op  == WRITE_T))
                     {
-                        cout<<"Commit is aborting another transaction from node "<<i<<" on ["<< temp_writes[k]<<"]"<<endl<<endl;
+//                        cout<<"Commit is aborting another transaction from node "<<i<<" on ["<< temp_writes[k]<<"]"<<endl<<endl;
                         //delete pending accesses from this transaction (i) in the commiting transaction (transaction_id)
                         nodes[(unsigned int)transaction_id].pending_accesses[i].clear();
 
@@ -810,17 +810,22 @@ void AccessCache::printParallelAccesses(int node_id)
 //{{{
     ParallelAccess_Desc temp_desc;
 
-    cout<<"---Parallel Accesses with node " <<node_id<<"---"<<endl;
-
+    cout<<"---Parallel Accesses from  " <<node_id<<"'s perspective---"<<endl;
+    cout<<"[this node's operation, opposing node id, opposing node operation, address]"<<endl;
     for(int i = 0; i < nodes[node_id].confirmed_accesses.size(); i++)
     {
         for(int j = 0; j < nodes[node_id].confirmed_accesses[i].size(); j++)
         {
             temp_desc = nodes[node_id].confirmed_accesses[i][j];
 
-            cout<<"ADDRESS = ["<<temp_desc.address<<"]"<<endl;
-            cout<<"\tThis node performed "<< getFriendlyOperationName(temp_desc.node_one_op)<<endl;
-            cout<<"\tOpposing node "<< temp_desc.node_two << " performed "<< getFriendlyOperationName(temp_desc.node_two_op)<<endl<<endl;
+            cout<<getFriendlyOperationName(temp_desc.node_one_op)<<", "<<
+                temp_desc.node_two<<", "<<
+                getFriendlyOperationName(temp_desc.node_two_op)<<", "<<
+                temp_desc.address<<endl;
+
+//            cout<<"ADDRESS = ["<<temp_desc.address<<"]"<<endl;
+//            cout<<"\tThis node performed "<< getFriendlyOperationName(temp_desc.node_one_op)<<endl;
+//            cout<<"\tOpposing node "<< temp_desc.node_two << " performed "<< getFriendlyOperationName(temp_desc.node_two_op)<<endl<<endl;
         }
     }
 //}}}
